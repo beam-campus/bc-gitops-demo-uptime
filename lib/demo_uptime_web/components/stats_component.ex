@@ -25,10 +25,7 @@ defmodule DemoUptimeWeb.StatsComponent do
       |> assign(:stats, Stats.all())
       |> assign_new(:theme, fn -> "dark" end)
       |> assign_new(:host_app, fn -> "unknown" end)
-
-    if connected?(socket) do
-      Process.send_after(self(), {:refresh_stats, socket.assigns.id}, @refresh_interval)
-    end
+      |> assign_new(:refresh_scheduled, fn -> false end)
 
     {:ok, socket}
   end
@@ -40,7 +37,20 @@ defmodule DemoUptimeWeb.StatsComponent do
       |> assign(assigns)
       |> assign(:stats, Stats.all())
 
+    # Schedule refresh only once after first update (when id is available)
+    socket =
+      if connected?(socket) && !socket.assigns.refresh_scheduled do
+        schedule_refresh(socket.assigns.id)
+        assign(socket, :refresh_scheduled, true)
+      else
+        socket
+      end
+
     {:ok, socket}
+  end
+
+  defp schedule_refresh(id) do
+    Process.send_after(self(), {:refresh_stats, id}, @refresh_interval)
   end
 
   @impl true
