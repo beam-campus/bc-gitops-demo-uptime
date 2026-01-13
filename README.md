@@ -3,9 +3,9 @@
 [![Hex.pm](https://img.shields.io/hexpm/v/demo_uptime.svg)](https://hex.pm/packages/demo_uptime)
 [![Docs](https://img.shields.io/badge/hex-docs-blue.svg)](https://hexdocs.pm/demo_uptime)
 
-BEAM VM uptime and statistics service for bc_gitops demos.
+BEAM VM uptime and statistics service with embeddable LiveComponent.
 
-This application demonstrates deploying an Erlang service via **hex.pm** (instead of git) using bc_gitops.
+This application demonstrates deploying an Elixir/Phoenix service via **hex.pm** using bc_gitops, with a LiveComponent that can be embedded in host applications.
 
 ## Features
 
@@ -15,6 +15,7 @@ This application demonstrates deploying an Erlang service via **hex.pm** (instea
 - Scheduler and CPU information
 - I/O and garbage collection stats
 - Formatted uptime display
+- **Embeddable LiveComponent** for host application dashboards
 
 ## Endpoints
 
@@ -26,23 +27,16 @@ This application demonstrates deploying an Erlang service via **hex.pm** (instea
 | `GET /stats` | Full VM statistics |
 | `GET /stats/memory` | Memory breakdown |
 | `GET /stats/processes` | Process count and limits |
+| `GET /stats/uptime` | Uptime information |
 
 ## Installation
 
-Add to your `rebar.config`:
-
-```erlang
-{deps, [
-    {demo_uptime, "0.1.0"}
-]}.
-```
-
-Or with Mix:
+Add to your `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:demo_uptime, "~> 0.1.0"}
+    {:demo_uptime, "~> 0.2.0"}
   ]
 end
 ```
@@ -51,11 +45,33 @@ end
 
 Default HTTP port is `8083`. Configure via application environment:
 
-```erlang
-{demo_uptime, [
-    {http_port, 8083}
-]}.
+```elixir
+config :demo_uptime, DemoUptimeWeb.Endpoint,
+  http: [port: 8083]
 ```
+
+## Embeddable LiveComponent
+
+The `DemoUptimeWeb.StatsComponent` can be embedded in host applications:
+
+```elixir
+<.live_component
+  module={DemoUptimeWeb.StatsComponent}
+  id="uptime-stats"
+  host_app="my_app"
+  theme="dark"
+/>
+```
+
+### Component Features
+
+- Live uptime counter with days/hours/minutes/seconds
+- Memory usage with breakdown (processes, binary, ETS)
+- Process count with usage bar
+- Scheduler/CPU information
+- I/O statistics
+- GC stats and system info
+- Theme support (light/dark)
 
 ## bc_gitops Integration
 
@@ -64,12 +80,20 @@ To deploy via bc_gitops using hex.pm as source, create an `app.config`:
 ```erlang
 #{
     name => demo_uptime,
-    version => <<"0.1.0">>,
+    version => <<"0.2.0">>,
     source => #{
         type => hex
     },
     env => #{
-        http_port => 8083
+        http_port => 8083,
+        liveview_components => [
+            #{
+                id => vm_stats,
+                module => 'Elixir.DemoUptimeWeb.StatsComponent',
+                title => <<"BEAM Stats">>,
+                description => <<"Real-time BEAM VM statistics">>
+            }
+        ]
     },
     health => #{
         type => http,
@@ -134,13 +158,13 @@ To deploy via bc_gitops using hex.pm as source, create an `app.config`:
 
 ```bash
 # Get dependencies
-rebar3 get-deps
+mix deps.get
 
 # Compile
-rebar3 compile
+mix compile
 
-# Run interactive shell
-rebar3 shell
+# Run server
+mix phx.server
 
 # Test endpoints
 curl http://localhost:8083/health

@@ -5,12 +5,9 @@
 # Usage: ./scripts/publish_to_hex.sh
 #
 # Prerequisites:
-#   - rebar3 installed
-#   - hex authentication configured (rebar3 hex user auth)
+#   - Elixir/Mix installed
+#   - hex authentication configured (mix hex.user auth)
 #   - Source secrets: source ~/.config/zshrc/01-secrets
-#
-# NOTE: rebar3 hex publish will prompt for "Local Password"
-#       This is HEX_USER_LOCAL_PASSWORD from your secrets file.
 #
 set -euo pipefail
 
@@ -26,9 +23,9 @@ cd "$PROJECT_DIR"
 
 echo "==> Checking prerequisites..."
 
-# Check rebar3
-if ! command -v rebar3 &> /dev/null; then
-    echo "ERROR: rebar3 not found. Please install rebar3."
+# Check mix
+if ! command -v mix &> /dev/null; then
+    echo "ERROR: mix not found. Please install Elixir."
     exit 1
 fi
 
@@ -39,28 +36,25 @@ if [[ -n $(git status --porcelain) ]]; then
     exit 1
 fi
 
-echo "==> Compiling..."
-rebar3 compile
+echo "==> Getting dependencies..."
+mix deps.get
 
-echo "==> Running dialyzer..."
-rebar3 dialyzer || echo "WARNING: Dialyzer found issues (continuing anyway)"
+echo "==> Compiling..."
+mix compile
+
+echo "==> Running tests..."
+mix test || echo "WARNING: Tests failed (continuing anyway)"
 
 echo "==> Building documentation..."
-rebar3 ex_doc
-
-echo "==> Building hex package..."
-rebar3 hex build
+mix docs
 
 echo ""
-echo "==> Package built successfully!"
+echo "==> Package ready!"
 echo ""
 echo "==> Publishing to hex.pm..."
 echo ""
-echo "NOTE: When prompted for 'Local Password', enter: \$HEX_USER_LOCAL_PASSWORD"
-echo "      (from ~/.config/zshrc/01-secrets)"
-echo ""
 
-rebar3 hex publish --yes
+mix hex.publish --yes
 
 echo ""
 echo "==> Done! Package published to hex.pm"
