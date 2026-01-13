@@ -3,7 +3,7 @@ defmodule DemoUptimeWeb.StatsComponent do
   A LiveComponent that displays BEAM VM statistics.
 
   This component can be embedded in host applications via bc_gitops.
-  It auto-refreshes every second to show live uptime and stats.
+  Stats can be pushed via PubSub for real-time updates.
 
   ## Required assigns from host:
     - `:id` - unique identifier for this component instance
@@ -11,6 +11,23 @@ defmodule DemoUptimeWeb.StatsComponent do
   ## Optional assigns from host:
     - `:host_app` - name of the host application
     - `:theme` - "light" or "dark" (default: "dark")
+    - `:stats` - stats map (if provided, component uses this instead of fetching)
+
+  ## Real-time Updates via PubSub
+
+  The host LiveView should subscribe to `DemoUptime.PubSub` topic `"stats:updates"`:
+
+      def mount(_params, _session, socket) do
+        if connected?(socket) do
+          Phoenix.PubSub.subscribe(DemoUptime.PubSub, "stats:updates")
+        end
+        {:ok, socket}
+      end
+
+      def handle_info({:stats_update, stats}, socket) do
+        send_update(DemoUptimeWeb.StatsComponent, id: :vm_stats, stats: stats)
+        {:noreply, socket}
+      end
   """
   use Phoenix.LiveComponent
 
@@ -20,7 +37,7 @@ defmodule DemoUptimeWeb.StatsComponent do
   def mount(socket) do
     socket =
       socket
-      |> assign(:stats, Stats.all())
+      |> assign_new(:stats, fn -> Stats.all() end)
       |> assign_new(:theme, fn -> "dark" end)
       |> assign_new(:host_app, fn -> "unknown" end)
 
@@ -29,7 +46,17 @@ defmodule DemoUptimeWeb.StatsComponent do
 
   @impl true
   def update(assigns, socket) do
-    {:ok, socket |> assign(assigns) |> assign(:stats, Stats.all())}
+    # Only use provided stats if explicitly passed, otherwise keep existing
+    socket = assign(socket, Map.drop(assigns, [:stats]))
+
+    socket =
+      if Map.has_key?(assigns, :stats) do
+        assign(socket, :stats, assigns.stats)
+      else
+        socket
+      end
+
+    {:ok, socket}
   end
 
   @impl true

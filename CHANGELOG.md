@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-01-13
+
+### Added
+
+- **Real-time stats via PubSub** - StatsCollector GenServer broadcasts VM statistics every second
+  - `DemoUptime.StatsCollector` - collects and broadcasts stats periodically
+  - Stats broadcast to `DemoUptime.PubSub` topic `"stats:updates"`
+  - Message format: `{:stats_update, stats_map}`
+- **Component PubSub metadata** for host application integration
+  - Host LiveViews can subscribe to stats updates and forward to components
+  - Component exposes `pubsub`, `topic`, and `update_assign` in app.config
+
+### Changed
+
+- `StatsComponent` now accepts stats via assigns (from `send_update/2`)
+- Stats fetched on-demand only on mount and manual refresh (not every update)
+- Improved component documentation with PubSub integration examples
+
 ## [0.2.2] - 2026-01-13
 
 ### Fixed

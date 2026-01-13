@@ -6,6 +6,7 @@ defmodule DemoUptime.Application do
   def start(_type, _args) do
     children = [
       {Phoenix.PubSub, name: DemoUptime.PubSub},
+      DemoUptime.StatsCollector,
       DemoUptimeWeb.Endpoint
     ]
 
