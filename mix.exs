@@ -13,7 +13,13 @@ defmodule DemoUptime.MixProject do
       deps: deps(),
       description: "BEAM VM uptime and statistics service with embeddable LiveComponent",
       package: package(),
-      docs: docs()
+      docs: docs(),
+      releases: [
+        demo_uptime: [
+          include_executables_for: [:unix],
+          applications: [runtime_tools: :permanent]
+        ]
+      ]
     ]
   end
 
