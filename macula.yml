@@ -1,0 +1,21 @@
+artifact:
+  id: io.beamcampus.demo.uptime
+  name: Demo Uptime
+  type: service
+  version: 0.3.1
+  description: BEAM VM uptime and statistics service with embeddable LiveComponent
+
+package:
+  source:
+    type: mix
+    release: demo_uptime
+
+# Health check endpoint
+health:
+  type: http
+  port: 4000
+  path: /
+
+# Runtime configuration
+env:
+  PORT: 4000
