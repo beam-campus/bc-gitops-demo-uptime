@@ -1,5 +1,18 @@
 import Config
 
+# Micro-frontend components for embedding in host applications
+config :demo_uptime, :liveview_components, [
+  %{
+    id: :vm_stats,
+    module: DemoUptimeWeb.StatsComponent,
+    title: "BEAM VM Stats",
+    description: "Real-time BEAM VM statistics including memory, processes, and I/O",
+    pubsub: DemoUptime.PubSub,
+    topic: "stats:updates",
+    update_assign: :stats
+  }
+]
+
 config :demo_uptime, DemoUptimeWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Phoenix.Endpoint.Cowboy2Adapter,
